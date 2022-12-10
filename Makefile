@@ -1,10 +1,9 @@
-CERT_PATH ?=``
 
-fn-nebula-cert-check-dev:
-	go run main.go $(CERT_PATH)
+exec-local:
+	go run . -cert-bucket=my-test-bucket -mode=local
 
-fn-nebula-cert-check-test:
+exec-test:
 	go test -v ./...
 
-fn-nebula-cert-check-test-coverage:
+exec-test-coverage:
 	go test -cover  ./...
