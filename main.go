@@ -39,7 +39,6 @@ type runConfig struct {
 func main() {
 
 	modePtr := flag.String("mode", "local", "Execution mode: local, aws or gcp")
-
 	certBucketPtr := flag.String("cert-bucket", "nebula-cert-bucket", "Defines the certificate bucket name")
 	resultBucketPtr := flag.String("result-bucket", "nebula-result-bucket", "Defines the result bucket name")
 
@@ -50,7 +49,12 @@ func main() {
 		log.Fatal(err)
 	}
 
-	log.Printf("Executing function in mode: `%s`", *modePtr)
+	work(*config)
+}
+
+func work(config runConfig) {
+
+	log.Printf("Executing function in mode: `%s`. Using certificate bucket: `%s` and store results in: `%s`", config.mode, config.certificateBucketName, config.resultBucketName)
 
 	objects, err := config.repository.ListFiles(config.certificateBucketName)
 	if err != nil {
