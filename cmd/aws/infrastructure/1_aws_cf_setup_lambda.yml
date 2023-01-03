@@ -1,24 +1,21 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Parameters:
+  CertificateBucketName:
+    Type: String # TODO: auslesen statt eingeben 
+  ResultBucketName:
+    Type: String # TODO: auslesen statt eingeben 
   LambdaS3Bucket:
     Type: String
-    Required: true
   LambdaS3Object:
     Type: String
-    Required: true
-  CertificateBucketName:
-    Type: String
-    Required: true
-  ResultBucketName:
-    Type: String
-    Required: true
 
 Resources:
 
   AnalyzeCertificatesFunction:
     Type: AWS::Lambda::Function
+    DeletionPolicy: Delete
     Properties:
-      Handler: HandleLambdaRequest
+      Handler: aws_lambda
       Role: !GetAtt LambdaExecutionRole.Arn
       MemorySize: 128
       Timeout: 10
@@ -33,6 +30,7 @@ Resources:
 
   LambdaExecutionRole:
     Type: AWS::IAM::Role
+    DeletionPolicy: Delete
     Properties:
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
@@ -53,4 +51,3 @@ Resources:
             Action:
             - logs:*
             Resource: arn:aws:logs:*:*:*
-    // TODO: S3 for 3 buckets for the lambda arn + me :) https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/quickref-s3.html

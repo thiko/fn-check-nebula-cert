@@ -1,0 +1,70 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  LambdaS3Bucket:
+    Type: String
+  LambdaS3Object:
+    Type: String
+  CertificateBucketName:
+    Type: String
+  ResultBucketName:
+    Type: String
+
+Resources:
+  CertificationBucket:
+    Type: 'AWS::S3::Bucket'
+    Metadata:
+      comment: 'Bucket to place the certificates into. Expires after 1 day'
+    Properties:
+      BucketName: !Ref CertificateBucketName
+      LifecycleConfiguration:
+        Rules:
+        - ExpirationInDays: 1
+          Status: Enabled
+
+  LambdaCodeBucket:
+    Type: 'AWS::S3::Bucket'
+    Metadata:
+      comment: 'Bucket to place the lambda code into'
+    Properties:
+      BucketName: !Ref LambdaS3Bucket
+
+  ResultBucket:
+    Type: 'AWS::S3::Bucket'
+    Metadata:
+      comment: 'Bucket to place the result into'
+    Properties:
+      BucketName: !Ref ResultBucketName
+
+
+  CertificateBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Metadata:
+      comment: 'Bucket policy to allow all users get access but deny put access.'
+    Properties:
+      Bucket: !Ref CertificationBucket
+      PolicyDocument:
+        Statement:
+        - Action: ['s3:GetObject', 's3:ListBucket']
+          Effect: Allow
+          Principal: '*'
+          Resource:
+          - !Sub arn:aws:s3:::${CertificationBucket}
+          - !Sub arn:aws:s3:::${CertificationBucket}/*
+
+  ResultBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Metadata:
+      comment: ''
+    Properties:
+      Bucket: !Ref ResultBucket
+      PolicyDocument:
+        Statement:
+        - Action: ['s3:GetObject', 's3:ListBucket', 's3:PutObject']
+          Effect: Allow
+          Principal: '*'
+          Resource:
+          - !Sub arn:aws:s3:::${ResultBucket}
+          - !Sub arn:aws:s3:::${ResultBucket}/*
+
+
+# !GetAtt AnalyzeCertificatesFunction.Arn
