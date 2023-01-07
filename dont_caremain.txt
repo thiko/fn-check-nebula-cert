@@ -1,0 +1,54 @@
+package main
+
+import (
+	"flag"
+	"fmt"
+	"log"
+	"thiko/function/check-nebula-cert/pkg/common"
+)
+
+func main() {
+
+	modePtr := flag.String("mode", "local", "Execution mode: local, aws or gcp")
+	certBucketPtr := flag.String("cert-bucket", "nebula-cert-bucket", "Defines the certificate bucket name")
+	resultBucketPtr := flag.String("result-bucket", "nebula-result-bucket", "Defines the result bucket name")
+
+	flag.Parse()
+
+	config, err := runConfigurationFromArguments(modePtr, certBucketPtr, resultBucketPtr)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var worker = &common.DefaultWorker{}
+	worker.Work(config)
+}
+
+func runConfigurationFromArguments(modePtr *string, certBucketPtr *string, resultBucketPtr *string) (*common.RunConfig, error) {
+
+	var repository common.ObjectStoreRepository
+
+	switch *modePtr {
+	case "local":
+		{
+			repository = &LocalRepository{}
+		}
+	case "aws":
+		{
+			repository = &AwsRepository{}
+		}
+	case "gcp":
+		{
+			repository = &GcpRepository{}
+		}
+	default:
+		return nil, fmt.Errorf("unknown execution mode `%s`", *modePtr)
+	}
+
+	return &common.RunConfig{
+		Repository:            repository,
+		Mode:                  *modePtr,
+		CertificateBucketName: *certBucketPtr,
+		ResultBucketName:      *certBucketPtr,
+	}, nil
+}

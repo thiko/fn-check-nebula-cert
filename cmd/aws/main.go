@@ -5,8 +5,10 @@ import (
 	"encoding/json"
 	"log"
 	"os"
+	"thiko/function/check-nebula-cert/pkg/common"
 
 	"github.com/aws/aws-lambda-go/events"
+	"github.com/aws/aws-lambda-go/lambda"
 )
 
 //Record each data record
@@ -29,10 +31,17 @@ func HandleLambdaRequest(ctx context.Context, event Event) {
 	eventJson, _ := json.MarshalIndent(event, "", "  ")
 	log.Printf("EVENT: %s", eventJson)
 
-	work(runConfig{
-		repository:            &AwsRepository{},
-		mode:                  "aws",
-		certificateBucketName: os.Getenv("cert-bucket"),
-		resultBucketName:      os.Getenv("result-bucket"),
-	})
+	runConfig := &common.RunConfig{
+		Repository:            &AwsRepository{},
+		Mode:                  "aws",
+		CertificateBucketName: os.Getenv("cert-bucket"),
+		ResultBucketName:      os.Getenv("result-bucket"),
+	}
+
+	worker := common.DefaultWorker{}
+	worker.Work(runConfig)
+}
+
+func main() {
+	lambda.Start(HandleLambdaRequest)
 }
