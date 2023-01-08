@@ -34,8 +34,8 @@ func HandleLambdaRequest(ctx context.Context, event Event) {
 	runConfig := &common.RunConfig{
 		Repository:            &AwsRepository{},
 		Mode:                  "aws",
-		CertificateBucketName: os.Getenv("cert-bucket"),
-		ResultBucketName:      os.Getenv("result-bucket"),
+		CertificateBucketName: os.Getenv("cert_bucket"),
+		ResultBucketName:      os.Getenv("result_bucket"),
 	}
 
 	worker := common.DefaultWorker{}

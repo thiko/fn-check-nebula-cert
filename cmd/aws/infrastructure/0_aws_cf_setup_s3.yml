@@ -2,18 +2,55 @@ AWSTemplateFormatVersion: '2010-09-09'
 Parameters:
   LambdaS3Bucket:
     Type: String
-  LambdaS3Object:
-    Type: String
+    Default: test-lambda-bucket-000991
   CertificateBucketName:
     Type: String
+    Default: test-cert-bucket-000991
   ResultBucketName:
     Type: String
+    Default: test-result-bucket-000991
 
 Resources:
-  CertificationBucket:
+
+  #Store s3 buckets in SSM Parameter Store    
+  LambdaBucketNameParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Description: Nebula cert check lambda S3 bucket
+      Name: NebulaLambdaBucket
+      Type: String
+      Value: !Ref LambdaS3Bucket
+
+  CertBucketNameParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Description: Nebula cert check S3 bucket
+      Name: CertificateBucketName
+      Type: String
+      Value: !Ref CertificateBucketName
+
+  CertProcessResultBucketNameParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Description: Nebula cert check S3 bucket
+      Name: CertProcessResultBucketName
+      Type: String
+      Value: !Ref ResultBucketName
+
+  #S3 Buckets
+  LambdaBucket:
+    Type: 'AWS::S3::Bucket'
+    Metadata:
+      comment: 'Bucket to place the lambda code into'
+    DeletionPolicy: Delete
+    Properties:
+      BucketName: !Ref LambdaS3Bucket
+
+  CertificateBucket:
     Type: 'AWS::S3::Bucket'
     Metadata:
       comment: 'Bucket to place the certificates into. Expires after 1 day'
+    DeletionPolicy: Delete
     Properties:
       BucketName: !Ref CertificateBucketName
       LifecycleConfiguration:
@@ -21,50 +58,10 @@ Resources:
         - ExpirationInDays: 1
           Status: Enabled
 
-  LambdaCodeBucket:
-    Type: 'AWS::S3::Bucket'
-    Metadata:
-      comment: 'Bucket to place the lambda code into'
-    Properties:
-      BucketName: !Ref LambdaS3Bucket
-
   ResultBucket:
     Type: 'AWS::S3::Bucket'
+    DeletionPolicy: Delete
     Metadata:
       comment: 'Bucket to place the result into'
     Properties:
       BucketName: !Ref ResultBucketName
-
-
-  CertificateBucketPolicy:
-    Type: AWS::S3::BucketPolicy
-    Metadata:
-      comment: 'Bucket policy to allow all users get access but deny put access.'
-    Properties:
-      Bucket: !Ref CertificationBucket
-      PolicyDocument:
-        Statement:
-        - Action: ['s3:GetObject', 's3:ListBucket']
-          Effect: Allow
-          Principal: '*'
-          Resource:
-          - !Sub arn:aws:s3:::${CertificationBucket}
-          - !Sub arn:aws:s3:::${CertificationBucket}/*
-
-  ResultBucketPolicy:
-    Type: AWS::S3::BucketPolicy
-    Metadata:
-      comment: ''
-    Properties:
-      Bucket: !Ref ResultBucket
-      PolicyDocument:
-        Statement:
-        - Action: ['s3:GetObject', 's3:ListBucket', 's3:PutObject']
-          Effect: Allow
-          Principal: '*'
-          Resource:
-          - !Sub arn:aws:s3:::${ResultBucket}
-          - !Sub arn:aws:s3:::${ResultBucket}/*
-
-
-# !GetAtt AnalyzeCertificatesFunction.Arn

@@ -1,57 +1,54 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Parameters:
-  LambdaS3Bucket:
-    Type: String
-    Default: test-lambda-bucket-000991
+  NebulaLambdaBucket:
+    Type: 'AWS::SSM::Parameter::Value<String>'
+    Default: NebulaLambdaBucket
   CertificateBucketName:
+    Type: 'AWS::SSM::Parameter::Value<String>'
+    Default: CertificateBucketName
+  CertProcessResultBucketName:
+    Type: 'AWS::SSM::Parameter::Value<String>'
+    Default: CertProcessResultBucketName
+  LambdaS3Object:
     Type: String
-    Default: test-cert-bucket-000991
-  ResultBucketName:
-    Type: String
-    Default: test-result-bucket-000991
+    Default: aws_lambda.zip
 
 Resources:
-
-  #Store s3 buckets in SSM Parameter Store    
-  LambdaBucketNameParamater:
-    Type: AWS::SSM::Parameter
-    Properties: 
-      Description: Nebula cert check lambda S3 bucket
-      Name: NebulaLambdaBucket
-      Type: String
-      Value: !Ref LambdaS3Bucket
-
-  CertBucketNameParamater:
-    Type: AWS::SSM::Parameter
-    Properties: 
-      Description: Nebula cert check S3 bucket
-      Name: CertificateBucketName
-      Type: String
-      Value: !Ref CertificateBucketName
-
-  CertProcessResultBucketNameParamater:
-    Type: AWS::SSM::Parameter
-    Properties: 
-      Description: Nebula cert check S3 bucket
-      Name: CertProcessResultBucketName
-      Type: String
-      Value: !Ref ResultBucketName
-
-  #S3 Buckets
-  LambdaBucket:
-    Type: 'AWS::S3::Bucket'
-    DeletionPolicy: Delete
+  AnalyzeCertificatesFunction:
+    Type: AWS::Lambda::Function
     Properties:
-      BucketName: !Ref LambdaS3Bucket
+      Handler: HandleLambdaRequest
+      Role: !GetAtt LambdaExecutionRole.Arn
+      MemorySize: 128
+      Timeout: 10
+      Code:
+        S3Bucket: !Ref NebulaLambdaBucket
+        S3Key: !Ref LambdaS3Object
+      Runtime: go1.x
+      Environment:
+        Variables:
+          cert_bucket: !Ref CertificateBucketName
+          result_bucket: !Ref CertProcessResultBucketName
 
-  CertificateBucket:
-    Type: 'AWS::S3::Bucket'
-    DeletionPolicy: Delete
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
     Properties:
-      BucketName: !Ref CertificateBucketName 
-
-  ResultBucket:
-    Type: 'AWS::S3::Bucket'
-    DeletionPolicy: Delete
-    Properties:
-      BucketName: !Ref ResultBucketName
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Path: "/"
+      Policies:
+      - PolicyName: root
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - logs:*
+            Resource: arn:aws:logs:*:*:*

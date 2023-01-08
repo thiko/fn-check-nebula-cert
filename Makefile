@@ -1,13 +1,14 @@
 build-aws:
-	go build ./cmd/aws
+	go build -o bin/aws_lambda_manual ./cmd/aws 
 
 build-lambda:
-	GOOS=linux GOARCH=amd64 go build -o aws_lambda ./cmd/aws
-	chmod +x aws_lambda
-	zip main.zip aws_lambda
+	GOOS=linux GOARCH=amd64 go build -o bin/aws_lambda ./cmd/aws
+	chmod +x bin/aws_lambda
+	zip bin/aws_lambda.zip bin/aws_lambda
+	rm -f bin/aws_lambda
 
 exec-local:
-	go run . -cert-bucket=my-test-bucket -mode=local
+	go run . -cert_bucket=my-test-bucket -mode=local
 
 exec-test:
 	go test -v ./...
